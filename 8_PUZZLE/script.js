@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function moveTile(tile) {
         let index = tiles.indexOf(tile);
-        let emptyIndex = tiles.indexOf('');
+        let emptyIndex = tiles.indexOf('empty');
         if (canMove(index, emptyIndex)) {
             [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
             renderTiles();
@@ -35,13 +35,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function canMove(index, emptyIndex) {
+        // タイルの行と列を計算
         let row = Math.floor(index / 3);
         let col = index % 3;
         let emptyRow = Math.floor(emptyIndex / 3);
         let emptyCol = emptyIndex % 3;
-
-        return (row === emptyRow && Math.abs(col - emptyCol) === 1) ||
-               (col === emptyCol && Math.abs(row - emptyRow) === 1);
+    
+        // 空白タイルの隣かどうかを判定
+        let adjacentRow = row === emptyRow && Math.abs(col - emptyCol) === 1;
+        let adjacentCol = col === emptyCol && Math.abs(row - emptyRow) === 1;
+        console.log("",adjacentRow || adjacentCol)
+        return adjacentRow || adjacentCol;
     }
 
     function checkCompletion() {
