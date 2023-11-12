@@ -1,0 +1,18 @@
+#puzzle-container {
+    width: 300px;
+    height: 300px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px;
+}
+
+.tile {
+    width: 100px;
+    height: 100px;
+    background-size: cover;
+    cursor: pointer;
+}
+
+.empty {
+    background-color: white;
+}
