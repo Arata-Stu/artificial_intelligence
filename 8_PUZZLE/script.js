@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('puzzle-container');
-    let tiles = ['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty'];
+    let tiles = ['1', '2', '3', '4', '5', '6', '7', '8', ''];
 
+    // タイルをシャッフルして配置
     shuffleTiles();
 
     function shuffleTiles() {
@@ -11,21 +12,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderTiles() {
         container.innerHTML = '';
-        tiles.forEach(tile => {
-            let tileDiv = document.createElement('div');
-            tileDiv.classList.add('tile');
-            if (tile !== 'empty') {
-                tileDiv.style.backgroundImage = `url('/Users/ta/Desktop/gifu/3.third/second_half/artificial_intelligence/8_PUZZLE/set/image/${tile}.jpg')`;
+        tiles.forEach(num => {
+            let tile = document.createElement('div');
+            tile.classList.add('tile');
+            if (num === '') {
+                tile.classList.add('empty');
             } else {
-                tileDiv.classList.add('empty');
+                tile.innerText = num;
             }
-            container.appendChild(tileDiv);
-            tileDiv.addEventListener('click', () => moveTile(tile));
+            container.appendChild(tile);
+            tile.addEventListener('click', () => moveTile(num));
         });
     }
 
-    function moveTile(tile) {
-        let index = tiles.indexOf(tile);
+    function moveTile(num) {
+        let index = tiles.indexOf(num);
         let emptyIndex = tiles.indexOf('');
         if (canMove(index, emptyIndex)) {
             [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
@@ -35,17 +36,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function canMove(index, emptyIndex) {
+        // 上下左右の位置を計算
         let row = Math.floor(index / 3);
         let col = index % 3;
         let emptyRow = Math.floor(emptyIndex / 3);
         let emptyCol = emptyIndex % 3;
 
+        // 空白の隣であれば動かせる
         return (row === emptyRow && Math.abs(col - emptyCol) === 1) ||
                (col === emptyCol && Math.abs(row - emptyRow) === 1);
     }
 
     function checkCompletion() {
-        if (tiles.join('') === 'tile_0_0tile_0_1tile_0_2tile_1_0tile_1_1tile_1_2tile_2_0tile_2_1empty') {
+        if (tiles.join('') === '12345678') {
             alert('パズル完成！');
         }
     }
@@ -57,5 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // シャッフルボタンのイベントリスナー
     document.getElementById('shuffle-button').addEventListener('click', shuffleTiles);
 });
