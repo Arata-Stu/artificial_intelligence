@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <title>画像パズル</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="puzzle-container"></div>
-    <button id="shuffle-button">シャッフル</button>
     <script src="script.js"></script>
+
+    <div id="button-container">
+        <button id="shuffle-button" class = "button">シャッフル</button>
+        <button id="start-random-moves" class="button">ランダム移動開始</button>
+        <button id="stop-random-moves" class="button">ランダム移動停止</button>
+        <button id="get-matrix-button" class="button">現在の状態を行列で取得</button>
+        <button id="test-generate-nodes" class="button">子ノード生成テスト</button>
+        <button id="dfs" class="button">DFS</button>
+    </div>
+
 </body>
+
 </html>
