@@ -181,18 +181,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderTiles()
 
+    // function renderTiles() {
+    //     container.innerHTML = '';
+    //     tiles.forEach(tile => {
+    //         let tileDiv = document.createElement('div');
+    //         tileDiv.classList.add('tile');
+    //         if (tile !== 'empty') {
+    //             tileDiv.style.backgroundImage = `url('/Users/ta/Desktop/gifu/3.third/second_half/artificial_intelligence/8_PUZZLE/set/image/${tile}.jpg')`;
+    //         } else {
+    //             tileDiv.classList.add('empty');
+    //         }
+    //         container.appendChild(tileDiv);
+    //         tileDiv.addEventListener('click', () => moveTile(tile));
+    //     });
+    // }
+
     function renderTiles() {
         container.innerHTML = '';
-        tiles.forEach(tile => {
+        tiles.forEach((tile, index) => {
             let tileDiv = document.createElement('div');
             tileDiv.classList.add('tile');
             if (tile !== 'empty') {
                 tileDiv.style.backgroundImage = `url('/Users/ta/Desktop/gifu/3.third/second_half/artificial_intelligence/8_PUZZLE/set/image/${tile}.jpg')`;
+                tileDiv.addEventListener('click', () => moveTile(index)); // インデックスに基づいてタイルを動かす
             } else {
                 tileDiv.classList.add('empty');
             }
             container.appendChild(tileDiv);
-            tileDiv.addEventListener('click', () => moveTile(tile));
         });
     }
 
@@ -206,7 +221,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ボタン操作による空白タイルの移動関数
+    function moveTile(clickedIndex) {
+        let emptyIndex = tiles.indexOf('empty');
+    
+        if (canMove(clickedIndex, emptyIndex)) {
+            [tiles[clickedIndex], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[clickedIndex]];
+            renderTiles(); // タイルの状態を更新して再描画
+        }
+    }
+    
     // ボタン操作による空白タイルの移動関数
     function moveEmptyByButton(direction) {
         let emptyIndex = tiles.indexOf('empty');
@@ -234,13 +257,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // タイルが動かせるかどうか判定する関数
-    function canMove(index, emptyIndex) {
-        let row = Math.floor(index / 3);
-        let col = index % 3;
+    function canMove(clickedIndex, emptyIndex) {
+        // 空白タイルとクリックされたタイルが隣接しているかをチェック
+        let clickedRow = Math.floor(clickedIndex / 3);
+        let clickedCol = clickedIndex % 3;
         let emptyRow = Math.floor(emptyIndex / 3);
         let emptyCol = emptyIndex % 3;
-
-        return (row === emptyRow && Math.abs(col - emptyCol) === 1) || (col === emptyCol && Math.abs(row - emptyRow) === 1);
+    
+        return (clickedRow === emptyRow && Math.abs(clickedCol - emptyCol) === 1) ||
+               (clickedCol === emptyCol && Math.abs(clickedRow - emptyRow) === 1);
     }
 
     function shuffleTiles() {
