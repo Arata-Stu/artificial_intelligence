@@ -1,8 +1,11 @@
 class PuzzleState {
-    constructor(tiles, parent = null, move = null) {
+    constructor(tiles, parent = null, move = null, g = 0) {
         this.tiles = tiles;
-        this.parent = parent; // この状態に至る前の状態
-        this.move = move; // この状態に至るために行った移動
+        this.parent = parent;  // 親ノード
+        this.move = move;      // この状態への移動
+        this.g = g;            // スタートからの移動回数
+        this.h = this.calculateH(); // ヒューリスティック値
+        this.f = this.g + this.h;   // 合計スコア
     }
 
     // 状態がゴールかどうか判定するメソッド
@@ -10,6 +13,57 @@ class PuzzleState {
         const goalState = ['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty'];
         return this.tiles.join('') === goalState.join('');
     }
+
+    calculateH() {
+        const goalState = ['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty'];
+        return this.tiles.filter((tile, index) => tile !== goalState[index]).length;
+    }
+
+    // 可能な子ノード（次の状態）を生成するメソッド
+    generateChildStates() {
+        let children = [];
+        let emptyIndex = this.tiles.indexOf('empty');
+
+        // 空白タイルの移動可能な位置を計算
+        let possibleMoves = this.getPossibleMoves(emptyIndex);
+
+        // 各移動に対して新しい状態を生成
+        possibleMoves.forEach(index => {
+            let newTiles = this.tiles.slice();
+            [newTiles[emptyIndex], newTiles[index]] = [newTiles[index], newTiles[emptyIndex]];
+            let moveDescription = `Move tile at index ${index} to empty space`; // 移動の説明
+            children.push(new PuzzleState(newTiles, this, moveDescription));
+        });
+
+        return children;
+    }
+
+    // 空白タイルの移動可能な位置を取得するメソッド
+    getPossibleMoves(emptyIndex) {
+        let moves = [];
+        let row = Math.floor(emptyIndex / 3);
+        let col = emptyIndex % 3;
+
+        // 上に移動可能か
+        if (row > 0) moves.push(emptyIndex - 3);
+        // 下に移動可能か
+        if (row < 2) moves.push(emptyIndex + 3);
+        // 左に移動可能か
+        if (col > 0) moves.push(emptyIndex - 1);
+        // 右に移動可能か
+        if (col < 2) moves.push(emptyIndex + 1);
+
+        return moves;
+    }
+
+
+
+    // 状態を文字列で表現するメソッド（探索済み状態のチェックに使用）
+    toString() {
+        return this.tiles.join(',');
+    }
+
+
 
     static dfs(startState) {
         let stack = [startState];
@@ -68,48 +122,54 @@ class PuzzleState {
         return null;
     }
 
-    
+    static aStar(startState) {
+        let openSet = new PriorityQueue((a, b) => a.f < b.f);
+        openSet.enqueue(startState, startState.f);
+        let visited = new Set();
 
-    // 可能な子ノード（次の状態）を生成するメソッド
-    generateChildStates() {
-        let children = [];
-        let emptyIndex = this.tiles.indexOf('empty');
+        while (!openSet.isEmpty()) {
+            let currentState = openSet.dequeue();
 
-        // 空白タイルの移動可能な位置を計算
-        let possibleMoves = this.getPossibleMoves(emptyIndex);
+            if (currentState.isGoal()) {
+                return currentState;
+            }
 
-        // 各移動に対して新しい状態を生成
-        possibleMoves.forEach(index => {
-            let newTiles = this.tiles.slice();
-            [newTiles[emptyIndex], newTiles[index]] = [newTiles[index], newTiles[emptyIndex]];
-            let moveDescription = `Move tile at index ${index} to empty space`; // 移動の説明
-            children.push(new PuzzleState(newTiles, this, moveDescription));
-        });
+            let stateStr = currentState.toString();
+            if (visited.has(stateStr)) {
+                continue;
+            }
+            visited.add(stateStr);
 
-        return children;
+            let childStates = currentState.generateChildStates();
+            childStates.forEach(child => {
+                let nextState = new PuzzleState(child.tiles, currentState, child.move, currentState.g + 1);
+                if (!visited.has(nextState.toString())) {
+                    openSet.enqueue(nextState, nextState.f);
+                }
+            });
+        }
+
+        return null;
+    }
+}
+
+class PriorityQueue {
+    constructor(comparator = (a, b) => a > b) {
+        this.elements = [];
+        this.comparator = comparator;
     }
 
-    // 空白タイルの移動可能な位置を取得するメソッド
-    getPossibleMoves(emptyIndex) {
-        let moves = [];
-        let row = Math.floor(emptyIndex / 3);
-        let col = emptyIndex % 3;
-
-        // 上に移動可能か
-        if (row > 0) moves.push(emptyIndex - 3);
-        // 下に移動可能か
-        if (row < 2) moves.push(emptyIndex + 3);
-        // 左に移動可能か
-        if (col > 0) moves.push(emptyIndex - 1);
-        // 右に移動可能か
-        if (col < 2) moves.push(emptyIndex + 1);
-
-        return moves;
+    enqueue(item, priority) {
+        this.elements.push({ item, priority });
+        this.elements.sort((a, b) => this.comparator(a.priority, b.priority));
     }
 
-    // 状態を文字列で表現するメソッド（探索済み状態のチェックに使用）
-    toString() {
-        return this.tiles.join(',');
+    dequeue() {
+        return this.elements.shift().item;
+    }
+
+    isEmpty() {
+        return this.elements.length === 0;
     }
 }
 
@@ -252,24 +312,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 解を実行する関数内で applyMove を使用
-    function executeSolution(solution, renderFunction,span) {
+    function executeSolution(solution, renderFunction, span) {
         let stepIndex = 0;
-    
+
         function nextStep() {
             if (stepIndex < solution.length) {
                 applyMove(tiles, solution[stepIndex]);
                 renderFunction(); // パズルを再描画
-    
+
                 // 現在の手数を表示
-                
+
                 console.log(`手数: ${stepIndex + 1} / ${solution.length}`);
-                
-                
+
+
                 stepIndex++;
                 setTimeout(nextStep, span); // 次のステップまでの遅延
             }
         }
-    
+
         nextStep();
     }
 
@@ -299,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return steps.reverse(); // 初期状態からゴール状態への順序
     }
 
-    
+
 
 
 
@@ -322,24 +382,38 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("ゴールに到達しました！");
             let solution = getSolutionSteps(goalState);
             console.log(`解を見つけました。手数: ${solution.length}`);
-            executeSolution(solution, renderTiles,1); // 解を実行する関数を呼び出す
+            executeSolution(solution, renderTiles, 1); // 解を実行する関数を呼び出す
         } else {
             console.log("ゴールに到達できませんでした。");
         }
     });
 
-    document.getElementById('bfs-button').addEventListener('click', function() {
+    document.getElementById('bfs-button').addEventListener('click', function () {
         let initialState = new PuzzleState([...tiles]);
         let goalState = PuzzleState.bfs(initialState);
-    
+
         if (goalState) {
             console.log("ゴールに到達しました！");
             let solution = getSolutionSteps(goalState);
             displaySolution(solution);
+            executeSolution(solution, renderTiles, 500);
+        } else {
+            console.log("ゴールに到達できませんでした。");
+        }
+    });
+
+    document.getElementById('astar-button').addEventListener('click', function() {
+        let initialState = new PuzzleState([...tiles]);
+        let goalState = PuzzleState.aStar(initialState);
+    
+        if (goalState) {
+            console.log("ゴールに到達しました！");
+            let solution = getSolutionSteps(goalState);
+            console.log(`解を見つけました。手数: ${solution.length}`);
             executeSolution(solution, renderTiles,500);
         } else {
             console.log("ゴールに到達できませんでした。");
         }
     });
-    
+
 });
