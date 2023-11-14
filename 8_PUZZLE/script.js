@@ -1,10 +1,15 @@
 class PuzzleState {
-    constructor(tiles, parent = null, move = null, g = 0) {
+    constructor(tiles, parent = null, move = null, g = 0,func_h = 0) {
         this.tiles = tiles;
         this.parent = parent;  // 親ノード
         this.move = move;      // この状態への移動
         this.g = g;            // スタートからの移動回数
-        this.h = this.calculateH(); // ヒューリスティック値
+        if (func_h === 0){
+            this.h = this.hamming_H(); // ヒューリスティック値
+        }else if (func_h === 1){
+            this.h = this.manhattan_H(); // ヒューリスティック値
+        }
+        
         this.f = this.g + this.h;   // 合計スコア
     }
 
@@ -14,10 +19,28 @@ class PuzzleState {
         return this.tiles.join('') === goalState.join('');
     }
 
-    calculateH() {
+    hamming_H() {
         const goalState = ['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty'];
         return this.tiles.filter((tile, index) => tile !== goalState[index]).length;
     }
+
+    manhattan_H() {
+        let h = 0;
+        const goalState = ['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty'];
+        for (let i = 0; i < this.tiles.length; i++) {
+            if (this.tiles[i] !== 'empty') {
+                let currentPos = i;
+                let goalPos = goalState.indexOf(this.tiles[i]);
+                let currentRow = Math.floor(currentPos / 3);
+                let currentCol = currentPos % 3;
+                let goalRow = Math.floor(goalPos / 3);
+                let goalCol = goalPos % 3;
+                h += Math.abs(currentRow - goalRow) + Math.abs(currentCol - goalCol);
+            }
+        }
+        return h;
+    }
+    
 
     // 可能な子ノード（次の状態）を生成するメソッド
     generateChildStates() {
@@ -37,6 +60,29 @@ class PuzzleState {
 
         return children;
     }
+
+    // 可能な子ノード（次の状態）を生成するメソッドを更新
+    generateChildStates_mark2() {
+        let children = [];
+        let emptyIndex = this.tiles.indexOf('empty');
+        let previousIndex = this.parent ? this.parent.tiles.indexOf('empty') : null;
+
+        // 空白タイルの移動可能な位置を計算
+        let possibleMoves = this.getPossibleMoves(emptyIndex);
+
+        // 各移動に対して新しい状態を生成
+        possibleMoves.forEach(index => {
+            if (index !== previousIndex) { // 直前の状態に戻る動きを避ける
+                let newTiles = this.tiles.slice();
+                [newTiles[emptyIndex], newTiles[index]] = [newTiles[index], newTiles[emptyIndex]];
+                let moveDescription = `Move tile at index ${index} to empty space`; // 移動の説明
+                children.push(new PuzzleState(newTiles, this, moveDescription));
+            }
+        });
+
+        return children;
+    }
+
 
     // 空白タイルの移動可能な位置を取得するメソッド
     getPossibleMoves(emptyIndex) {
@@ -180,21 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let initialState = new PuzzleState(['tile_0_0', 'tile_0_1', 'tile_0_2', 'tile_1_0', 'tile_1_1', 'tile_1_2', 'tile_2_0', 'tile_2_1', 'empty']);
 
     renderTiles()
-
-    // function renderTiles() {
-    //     container.innerHTML = '';
-    //     tiles.forEach(tile => {
-    //         let tileDiv = document.createElement('div');
-    //         tileDiv.classList.add('tile');
-    //         if (tile !== 'empty') {
-    //             tileDiv.style.backgroundImage = `url('/Users/ta/Desktop/gifu/3.third/second_half/artificial_intelligence/8_PUZZLE/set/image/${tile}.jpg')`;
-    //         } else {
-    //             tileDiv.classList.add('empty');
-    //         }
-    //         container.appendChild(tileDiv);
-    //         tileDiv.addEventListener('click', () => moveTile(tile));
-    //     });
-    // }
+    displayMoveHints();
 
     function renderTiles() {
         container.innerHTML = '';
@@ -219,17 +251,21 @@ document.addEventListener('DOMContentLoaded', function () {
             [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
             renderTiles();
         }
+        //ヒントを表示
+        displayMoveHints()
     }
 
     function moveTile(clickedIndex) {
         let emptyIndex = tiles.indexOf('empty');
-    
+
         if (canMove(clickedIndex, emptyIndex)) {
             [tiles[clickedIndex], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[clickedIndex]];
             renderTiles(); // タイルの状態を更新して再描画
         }
+        //ヒントを表示
+        displayMoveHints();
     }
-    
+
     // ボタン操作による空白タイルの移動関数
     function moveEmptyByButton(direction) {
         let emptyIndex = tiles.indexOf('empty');
@@ -263,9 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let clickedCol = clickedIndex % 3;
         let emptyRow = Math.floor(emptyIndex / 3);
         let emptyCol = emptyIndex % 3;
-    
+
         return (clickedRow === emptyRow && Math.abs(clickedCol - emptyCol) === 1) ||
-               (clickedCol === emptyCol && Math.abs(clickedRow - emptyRow) === 1);
+            (clickedCol === emptyCol && Math.abs(clickedRow - emptyRow) === 1);
     }
 
     function shuffleTiles() {
@@ -385,6 +421,61 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+    function displayMoveHints() {
+        let currentState = new PuzzleState(tiles);
+        let childStates = currentState.generateChildStates_mark2();
+        let hints = {
+            up: { element: document.getElementById('hint-up'), value: Number.MAX_VALUE },
+            down: { element: document.getElementById('hint-down'), value: Number.MAX_VALUE },
+            left: { element: document.getElementById('hint-left'), value: Number.MAX_VALUE },
+            right: { element: document.getElementById('hint-right'), value: Number.MAX_VALUE }
+        };
+
+        // 各移動可能な方向のH値を計算
+        childStates.forEach(childState => {
+            let move = childState.move.match(/Move tile at index (\d+) to empty space/);
+            if (move) {
+                let index = parseInt(move[1], 10);
+                let direction = getMoveDirection(index, currentState.tiles.indexOf('empty'));
+                if (direction && childState.h < hints[direction].value) {
+                    hints[direction].value = childState.h;
+                }
+            }
+        });
+
+        // 最適な移動を探す
+        let optimalDirection = Object.keys(hints).reduce((optimal, direction) =>
+            hints[direction].value < hints[optimal].value ? direction : optimal, 'up'
+        );
+
+        // H値を表示し、最適な移動を強調
+        Object.keys(hints).forEach(direction => {
+            let hintElement = hints[direction].element;
+            let isOptimal = direction === optimalDirection;
+            let moveText = `${direction}に移動: H値 ${hints[direction].value}`;
+            hintElement.textContent = moveText;
+            hintElement.className = isOptimal ? 'hint optimal-move' : 'hint';
+        });
+    }
+
+
+    // インデックスから移動方向を取得する関数
+    function getMoveDirection(tileIndex, emptyIndex) {
+        let tileRow = Math.floor(tileIndex / 3);
+        let tileCol = tileIndex % 3;
+        let emptyRow = Math.floor(emptyIndex / 3);
+        let emptyCol = emptyIndex % 3;
+
+        if (tileRow === emptyRow) {
+            return tileCol < emptyCol ? 'left' : 'right';
+        } else if (tileCol === emptyCol) {
+            return tileRow < emptyRow ? 'up' : 'down';
+        }
+        return null;
+    }
+
+
+
 
 
 
@@ -427,18 +518,38 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.getElementById('astar-button').addEventListener('click', function() {
+    document.getElementById('astar-1-button').addEventListener('click', function () {
         let initialState = new PuzzleState([...tiles]);
         let goalState = PuzzleState.aStar(initialState);
-    
+        console.log("ハミング距離")
         if (goalState) {
             console.log("ゴールに到達しました！");
             let solution = getSolutionSteps(goalState);
             console.log(`解を見つけました。手数: ${solution.length}`);
-            executeSolution(solution, renderTiles,500);
+            executeSolution(solution, renderTiles, 500);
         } else {
             console.log("ゴールに到達できませんでした。");
         }
+
     });
+
+    document.getElementById('astar-2-button').addEventListener('click', function () {
+        let initialState = new PuzzleState([...tiles]);
+        let goalState = PuzzleState.aStar(initialState);
+
+        console.log("マンハッタン距離")
+        if (goalState) {
+        
+            console.log("ゴールに到達しました！");
+            let solution = getSolutionSteps(goalState);
+            console.log(`解を見つけました。手数: ${solution.length}`);
+            executeSolution(solution, renderTiles, 500);
+        } else {
+            console.log("ゴールに到達できませんでした。");
+        }
+
+    });
+
+    //document.getElementById('hint-button').addEventListener('click', displayMoveHints);
 
 });

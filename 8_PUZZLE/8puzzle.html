@@ -11,28 +11,38 @@
     <div id="puzzle-container"></div>
     <script src="script.js"></script>
 
+    <!-- H値を表示する領域 -->
+    <div id="hints">
+        <div id="hint-up">上に移動: </div>
+        <div id="hint-down">下に移動: </div>
+        <div id="hint-left">左に移動: </div>
+        <div id="hint-right">右に移動: </div>
+    </div>
+
     <div id="controls">
-        <button id="move-up" class = "button_blue">上に移動</button>
-        <button id="move-down" class = "button_blue">下に移動</button>
-        <button id="move-left" class = "button_blue">左に移動</button>
-        <button id="move-right" class = "button_blue">右に移動</button>
+        <button id="move-up" class="button_blue">上に移動</button>
+        <button id="move-down" class="button_blue">下に移動</button>
+        <button id="move-left" class="button_blue">左に移動</button>
+        <button id="move-right" class="button_blue">右に移動</button>
     </div>
 
     <div id="button-container">
-        <button id="shuffle-button" class = "button_green">シャッフル</button>
+        <button id="shuffle-button" class="button_green">シャッフル</button>
         <button id="start-random-moves" class="button_green">ランダム移動開始</button>
         <button id="stop-random-moves" class="button_green">ランダム移動停止</button>
         <button id="check-button" class="button_green">Check</button>
-        
+
     </div>
 
     <div id="button-container">
         <button id="dfs-button" class="button_green">DFS</button>
         <button id="bfs-button" class="button_green">BFS</button>
-        <button id="astar-button" class="button_green">A-star</button>
-        
-        
+        <button id="astar-1-button" class="button_green">A-star_1</button>
+        <button id="astar-2-button" class="button_green">A-star_2</button>
+
     </div>
+
+    <!-- <button id="hint-button" class = "button_red">ヒントを表示</button> -->
 
 </body>
 
