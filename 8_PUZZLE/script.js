@@ -474,11 +474,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-
-
-
-
-
     // ボタンにイベントリスナーを追加
     document.getElementById('move-up').addEventListener('click', () => moveEmptyByButton('up'));
     document.getElementById('move-down').addEventListener('click', () => moveEmptyByButton('down'));
